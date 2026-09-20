@@ -7,6 +7,7 @@ P = json.load(open("project.json", encoding="utf-8"))
 VO = json.load(open("vo.json", encoding="utf-8"))
 CHROME = P.get("chrome", r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 W, H = 1920, 1080
+FPS = P.get("fps", 60)
 FOOT = P["footage"]; FX, FY = P.get("footage_pos", [80, 80]); FW, FH = P.get("footage_size", [1760, 868])
 PAD, CPAD = P.get("pad_seconds", 1.0), P.get("card_pad_seconds", 1.5)
 CHIP_S = P.get("chip_seconds", 4)
@@ -67,7 +68,7 @@ for n, (sc, vo) in enumerate(zip(P["scenes"], VO)):
     segs.append((n, sc, vo, st, du, round(st + du, 2))); t += du
 TOTAL = round(t, 2)
 
-cmd = ["ffmpeg", "-y", "-v", "error", "-stats", "-f", "lavfi", "-i", f"color=c=0x{B['bg'].lstrip('#')}:s={W}x{H}:r=30:d={TOTAL}"]
+cmd = ["ffmpeg", "-y", "-v", "error", "-stats", "-f", "lavfi", "-i", f"color=c=0x{B['bg'].lstrip('#')}:s={W}x{H}:r={FPS}:d={TOTAL}"]
 vf, af, idx, chain = [], [], 1, "[0:v]"
 def overlay(i, x, y, st, end, fade=0.0):
     global chain
@@ -95,7 +96,7 @@ vf.append(f"{chain}format=yuv420p[vout]")
 filt = ";".join(vf + af + [f"{amix}amix=inputs={len(af)}:normalize=0:dropout_transition=0[aout]"])
 script = HERE / "overlays" / "filter.txt"; script.write_text(filt, encoding="utf-8")
 cmd += ["-/filter_complex", str(script), "-map", "[vout]", "-map", "[aout]", "-t", str(TOTAL),
-        "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-r", "30", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", P["output"]]
+        "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-r", str(FPS), "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", P["output"]]
 print("inputs:", idx, "total:", TOTAL, "s", flush=True)
 subprocess.run(cmd, check=True)
 print("done ->", P["output"])

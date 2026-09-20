@@ -18,7 +18,7 @@ except ImportError:
 P = json.load(open("project.json", encoding="utf-8"))
 WITH_VO = "--vo" in sys.argv
 CHROME = P.get("chrome", r"C:\Program Files\Google\Chrome\Application\chrome.exe")
-W, H, FPS = 1920, 1080, 30
+W, H, FPS = 1920, 1080, P.get("fps", 60)
 FOOT = P["footage"]; FX, FY = P.get("footage_pos", [80, 80]); FW, FH = P.get("footage_size", [1760, 868])
 BLACK, T = P.get("black_seconds", 1.0), P.get("xfade_seconds", 0.5)
 TRANS = P.get("transitions", ["smoothright", "fade", "wiperight", "circleopen", "slideright", "fadegrays"])

@@ -1,0 +1,25 @@
+{
+  "fps": 60,
+  "crf": 17,
+  "app_url": "http://localhost:3000/app.html",
+  "tab_title": "הדגמת מערכת חיה | סטודיו 60 FPS",
+  "host": "http://localhost:3000",
+  "path": "/app.html",
+  "steps": [
+    { "action": "hold", "seconds": 2.5 },
+    { "action": "camera", "scale": 1.35, "x": 960, "y": 600, "duration_ms": 1200 },
+    { "action": "scroll", "delta_y": 300 },
+    { "action": "move_cursor", "x": 960, "y": 640, "duration_ms": 800 },
+    { "action": "click", "ripple": true, "settle_ms": 300 },
+    { "action": "type", "selector": "#input-field", "text": "הדגמת הזנת טקסט חיה", "delay_ms": 65 },
+    { "action": "hud", "text": "^A", "duration_ms": 1200 },
+    { "action": "hold", "seconds": 1.5 },
+    { "action": "camera", "scale": 1.2, "x": 960, "y": 720, "duration_ms": 1200 },
+    { "action": "move_cursor", "x": 1150, "y": 740, "duration_ms": 800 },
+    { "action": "click", "ripple": true },
+    { "action": "hold", "seconds": 2.0 },
+    { "action": "reset_camera", "duration_ms": 1500 },
+    { "action": "move_cursor", "x": 960, "y": 600, "duration_ms": 1000 },
+    { "action": "hold", "seconds": 3.0 }
+  ]
+}

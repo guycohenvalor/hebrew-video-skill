@@ -17,7 +17,7 @@ WITH_VO = "--vo" in sys.argv
 REBUILD = "--rebuild" in sys.argv
 
 CHROME = P.get("chrome", r"C:\Program Files\Google\Chrome\Application\chrome.exe")
-W, H, FPS = 1920, 1080, 30
+W, H, FPS = 1920, 1080, P.get("fps", 60)
 BLACK, T = P.get("black_seconds", 1.0), P.get("xfade_seconds", 0.5)
 TRANS = P.get("transitions", ["smoothright", "fade", "wiperight", "circleopen", "slideright", "fadegrays"])
 RLM = "\u200f"

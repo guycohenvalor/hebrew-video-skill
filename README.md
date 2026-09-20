@@ -26,6 +26,8 @@
 | **חריגה מ-60 שניות ברילס/שורטס** | סרטון מעל 60 שניות נחתך או נפסל מלופים של שורטס | בקרת זמנים קפדנית ל-50 עד 58 שניות |
 | **רעשי גניחה/נחירות מלאכותיים** | ניסיונות לייצר קולות נחירה או אנחות ב-TTS נשמעים מעוותים | קריינות נקייה ורהוטה על גבי מוזיקת רקע אווירתית ואפקטים קוליים מתוזמנים (UI SFX) |
 | **תמונה סטטית עם פאן/זום בלבד** | סרטון פוסט עם קרופ סטטי ותנועות קלות נתפס כמצגת משעממת והצופים נוטשים | אנימציית וידאו גנרטיבית אמיתית (Image-to-Video ב-Kling/MiniMax) עם לופ פינג-פונג רציף |
+| **הקלטת מסך מקוטעת (Screenshots)** | שימוש באוסף תמונות נראה כמצגת מקרטעת | הקלטת דפדפן רציפה ב-Playwright עם עכבר וירטואלי חלק (Ease-Out Cubic), גלי לחיצה (Ripples), HUD מקלדת ובקרת מצלמה דינמית |
+| **קצב פריימים נמוך (25/30 FPS)** | תנועת עכבר מקוטעת וריצוד עין בטקסטים | תקן שידור של 60.0 FPS מלא (Broadcast Grade) בכל הפורמטים |
 
 ---
 
@@ -59,19 +61,29 @@ python ~/.claude/skills/hebrew-video/scripts/render.py          # out/<name>.mp4
 5. כתוביות Heebo Black ותגיות הדגשה פיל בצהוב/טורקיז.
 6. מאסטרינג סאונד: מוזיקת רקע מונמכת ב-lowpass 4500Hz, אפקטי סאונד מתוזמנים ונרמול ל- -14 LUFS.
 
+### אופציה 3: הקלטת מסך דמו סטודיו בדפדפן ב-60 FPS (Screen Studio 60 FPS Demo)
+```bash
+# 1. תרחיש הפעלה אוטומטי (קליקים, הקלדה, זום מצלמה ו-HUD מקלדת) ב-templates/studio_scenario.json
+# 2. הרצת מקליט הסטודיו ב-Playwright עם טרנסקודינג ל-60 FPS (CRF 17):
+python ~/.claude/skills/hebrew-video/scripts/studio_record_60fps.py --scenario templates/studio_scenario.json --output out/studio_demo.mp4 --fps 60
+```
+
 ---
 
 ## מבנה
 
 ```
-SKILL.md                  ההוראות ל‑Claude Code: כללים, סדר עבודה, מוסכמות כתוביות ומודלי הפקה
-templates/project.json    פרויקט מלא לדוגמה (סרטון לקוח של 2:16)
-scripts/clean_footage.py  crop + boxblur מתוזמן + scale
-scripts/vo.py             ElevenLabs eleven_v3 עם with-timestamps, חיתוך כתוביות לשורה אחת
-scripts/qa_vo.py          תמלול חוזר (Scribe) מול התסריט
-scripts/render.py         שכבות HTML → PNG ב‑Chrome headless → גרף ffmpeg אחד
-scripts/animations.py     אלגוריתמי תנועה, לופ פינג-פונג, ניצוץ יהלום ועיבוד פריימים
-reference/lessons.md      יומן התקלות: מה נכשל, למה, ומה עובד (כולל מקרה בוחן סרטון הסטודיו)
+SKILL.md                       ההוראות ל‑Claude Code: כללים, סדר עבודה, מוסכמות כתוביות, 60 FPS ומודלי הפקה
+templates/project.json         פרויקט מלא לדוגמה (סרטון לקוח של 2:16)
+templates/studio_recorder.html תבנית מעטפת סטודיו למחשב עם חלון דפדפן, עכבר וירטואלי, גלי לחיצה ו-HUD
+templates/studio_scenario.json תבנית תרחיש אוטומציה להקלטת דמו ב-60 FPS
+scripts/clean_footage.py       crop + boxblur מתוזמן + scale
+scripts/vo.py                  ElevenLabs eleven_v3 עם with-timestamps, חיתוך כתוביות לשורה אחת
+scripts/qa_vo.py               תמלול חוזר (Scribe) מול התסריט
+scripts/render.py              שכבות HTML → PNG ב‑Chrome headless → גרף ffmpeg אחד ב-60 FPS
+scripts/studio_record_60fps.py מקליט דפדפן אוטונומי ב-Playwright וקידוד 60 FPS מלא
+scripts/animations.py          אלגוריתמי תנועה, לופ פינג-פונג, ניצוץ יהלום ועיבוד פריימים
+reference/lessons.md           יומן התקלות: מה נכשל, למה, ומה עובד (כולל מקרי בוחן סטודיו ו-Cursor)
 ```
 
 ---
