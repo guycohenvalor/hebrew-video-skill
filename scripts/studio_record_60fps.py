@@ -133,7 +133,7 @@ class StudioRecorder:
         cmd = [
             'ffmpeg', '-y',
             '-i', raw_webm,
-            '-filter:v', f'fps={self.fps}',
+            '-filter:v', f'framerate=fps={self.fps}:interp_start=0:interp_end=255',
             '-c:v', 'libx264',
             '-preset', 'slow',
             '-crf', str(self.crf),
