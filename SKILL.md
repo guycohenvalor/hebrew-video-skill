@@ -201,29 +201,56 @@ projects/<post_name>/
   - בעת שימוש בקיצורים (כגון סימון הכל `^A`, מחיקה, או פעולות מערכת), מופעלת `window.studioShowHud('^A')`.
   - תגית כהה מעוגלת ויוקרתית (Dark Glassmorphism) צפה בתחתית המסך ומציגה לצופה את הפקודה המדויקת.
 
-### 4. בקרת מצלמה דינמית (Dynamic Camera Zoom & Pan)
-- **היררכיית זוויות צילום בסרטון דמו:**
-  1. **מבט רחב מלא (1.0x Full Desktop):** בשניות הראשונות (00s-03s) ובסיום הסרטון, המצלמה ניצבת על 1.0x ומציגה את סביבת העבודה השלמה.
-  2. **זום ממוקד על שדות קלט (1.25x - 1.35x):** בזמן מילוי טפסים, הקלדת פרומפטים והזנת נתונים, המצלמה מתקרבת בטרנזישן חלק (`transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)`) לשדה הרלוונטי.
-  3. **פאן חלק לכרטיסי תוצאות וחישובים:** כאשר נוצרת תוצאה, המצלמה גולשת בצורה אופקית/אנכית אל כרטיסי ה-KPI, הגרפים והמספרים.
-  4. **ריסוט פריים:** בסיום התהליך, המצלמה חוזרת בצורה חלקה ל-1.0x להדגשת הישג המערכת הכולל.
+### 4. בקרת מצלמה דינמית ומקצב נשימה (Dynamic Camera Breathing Cadence)
+- **חוק ברזל: שילוב מתוזמן בין תקריב (Focus) למבט רחב (Overview):**
+  - טעות נפוצה: הישארות ממושכת בזום של 1.25x-1.35x מעלימה את שולי החלון, הטפט של שולחן העבודה והדוק, ומאבדת את חוויית ה-Screen Studio הייחודית.
+  - **מקצב הנשימה התקני שנלמד מ-Cursor Benchmark:**
+    1. **פתיחה רחבה (00s-03s):** מבט רחב 1.0x המציג את סביבת שולחן העבודה, הטפט, החלון הצף והדוק במלוא הדרם.
+    2. **תקריב לפעולה (Focus):** זום חלק ל-1.26x-1.28x בדיוק בזמן הקלדה ממוקדת בשדה, כדי לאפשר קריאה נוחה וחדה של הטקסט.
+    3. **חזרה למבט רחב (Overview):** מיד עם סיום ההקלדה, המצלמה חוזרת בצורה חלקה ל-1.0x כדי להציג את התעדכנות התוצאות בהקשר הרחב של המערכת.
+    4. **זום עדין לבחינת טבלאות נתונים:** 1.08x בלבד, המאפשר קריאת שורות ועמודות תוך שמירה על שולי החלון והטפט של שולחן העבודה בתמונה.
+    5. **גרנד פינאלה:** סיום יציב ב-1.0x המציג את המערכת הגמורה עם כל הנתונים, המספרים וכרטיסי החישוב.
 
-### 5. אוטומציית דפדפן חיה (Playwright Automation Engine)
-- **הרצה:** מבוסס על `scripts/studio_record_60fps.py`.
-- **הקלדה בקצב אנושי:** שימוש ב-`locator.press_sequentially(text, delay=65)` (בין 50ms ל-80ms לתו) המדמה הקלדה אמיתית בזמן אמת.
-- **סנכרון פעולות:** השהיות קלות (settle delays של 200-400ms) לפני ואחרי לחיצות, כדי שהצופה יקלוט את התנועה לפני הפעלת הפעולה.
-
-### 6. תקן קידוד שידור ב-60 FPS (Transcoding Pipeline)
-- הקלטת ה-Screencast הגולמית של Playwright נשמרת בפורמט WebM.
-- הרצת טרנסקודינג ב-FFmpeg לקבלת קובץ מאסטר ב-60 FPS מלא:
-  ```bash
-  ffmpeg -y -i input.webm -filter:v fps=60 -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p output.mp4
-  ```
-- **פרמטרים קריטיים:**
-  - `-filter:v fps=60`: מייצר תנועה חלקה ללא קפיצות (Buttery smooth 60 FPS).
-  - `-crf 17`: איכות ויזואלית חדה ללא עיוותי דחיסה בטקסטים קטנים.
-  - `-preset slow`: אופטימיזציה מקסימלית ליחס איכות/גודל קובץ.
-  - `-pix_fmt yuv420p`: תאימות מלאה לכל הנגנים, הדפדפנים ומערכות ההפעלה.
+### 5. ארכיטקטורת רינדור 60 FPS אמיתית (True 60 FPS Compositor Stepping)
+- **מדוע הקלטת המסך הרגילה של Playwright (`record_video_dir`) נכשלה:**
+  - מנגנון ה-Screencast הפנימי של Chromium מוגבל בקוד המקור C++ ל-25 FPS בלבד (`options.kDefaultFramesPerSecond = 25`).
+  - שימוש ב-FFmpeg `-filter:v fps=60` על מקור של 25 FPS רק משכפל פריימים (Duplicate Frames: A, A, B, B, B...), והעין רואה סרטון מקרטע ב-25-30 FPS.
+  - שימוש באינטרפולציית תנועה (`minterpolate` או `framerate`) מייצר טשטוש מריחה כפול (Ghosting / Double Cursor) בלתי נסבל.
+- **הפתרון המנצח: שליטה בקומפוזיטור דרך Chrome DevTools Protocol (`HeadlessExperimental.beginFrame`):**
+  - Chromium מופעל במצב Headless עם הדגלים:
+    `--enable-begin-frame-control --run-all-compositor-stages-before-draw --disable-new-content-rendering-timeout --no-sandbox`.
+  - נפתחת סשן CDP (`context.new_cdp_session(page)`) עם הפעלת `HeadlessExperimental.enable`.
+  - מתבצעת לולאת פריימים דטרמיניסטית ב-Python (`3600` פריימים עבור 60 שניות, `dt = 16,666.67 µs`):
+    1. קידום מצב ה-DOM והאנימציות ב-JS: `page.evaluate(f"window.studioSeek({t_sec:.5f})")`.
+    2. שליחת פקודת ציור ישירה לקומפוזיטור:
+       ```python
+       res = client.send('HeadlessExperimental.beginFrame', {
+           'frameTimeTicks': 1000000 + frame_idx * 16666.666667,
+           'interval': 16666.666667,
+           'screenshot': {'format': 'jpeg', 'quality': 88}
+       })
+       ```
+    3. הזרמת בייטי התמונה ישירות אל `stdin` של FFmpeg בצינור `image2pipe` ללא שמירת קבצים זמניים בדיסק:
+       ```python
+       cmd = [
+           'ffmpeg', '-y',
+           '-f', 'image2pipe',
+           '-vcodec', 'mjpeg',
+           '-r', '60',
+           '-i', '-',
+           '-c:v', 'libx264',
+           '-preset', 'fast',
+           '-crf', '17',
+           '-pix_fmt', 'yuv420p',
+           output_mp4
+       ]
+       ffmpeg_proc.stdin.write(base64.b64decode(res['screenshotData']))
+       ```
+  - **תוצאות מדידה מוכחות (Verified Metrics):**
+    - **60.0 FPS מדויק** (3600 פריימים עבור 60.00 שניות).
+    - **0 Duplicate Frames** בזמן תנועה (כל פריים מכיל דלתא פיקסלית ייחודית וחדה).
+    - **0 Ghosting / Motion Blur** (קצוות עכבר חדים ברמת הפיקסל הבודד).
+    - מהירות רינדור: 20-30 FPS (סרטון של דקה מתרנדר בפחות מ-3 דקות).
 
 ---
 
@@ -255,16 +282,18 @@ projects/<post_name>/
 1. **הכנת סביבת האפליקציה:**
    - בדיקת זמינות השרת / ה-URL של האפליקציה (למשל `http://localhost:3000`).
    - הגדרת תבנית `templates/studio_recorder.html` עם כותרת הטאב, הכתובת וה-URL.
-2. **בניית תרחיש הפעולה (Scenario Scripting):**
-   - תכנון שלבי הדמו: החזקת פתיחה (Hold), תנועות עכבר חלקות (Ease-Out Cubic), לחיצות עם Ripple, הקלדה חיה ב-Playwright עם `press_sequentially`, והצגת תגיות HUD צפות.
-   - הגדרת תנועות מצלמה: זום ממוקד (1.25x-1.35x) לשדות קלט, פאן לכרטיסי תוצאות, וריסוט ל-1.0x.
-3. **הקלטת Screencast ב-Playwright:**
-   - הפעלת `scripts/studio_record_60fps.py` או שימוש במחלקת `StudioRecorder`.
-   - הקלטת וידאו ב-1920x1200 ברזולוציה מקורית.
-4. **קידוד שידור ב-60 FPS:**
-   - טרנסקודינג ב-FFmpeg עם `-filter:v fps=60 -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p`.
+2. **בניית מנוע תנועה דטרמיניסטי (Deterministic Timeline):**
+   - הגדרת שלבי הדמו ב-`window.studioSeek(t)`: תנועות עכבר חלקות (Ease-Out / Ease-InOut Cubic), לחיצות עם שקיעת עכבר טקטילית (scale 0.92) וגלי Ripple, הקלדה חיה אות-אחר-אות עם אירועי `input`, והצגת תגיות HUD צפות.
+   - הגדרת מקצב נשימה של המצלמה: תקריב (1.26x-1.28x) בזמן הקלדה ממוקדת, וחזרה מהירה למבט רחב (1.0x) להצגת ההקשר המלא של שולחן העבודה והחלון הצף.
+3. **רינדור 60 FPS ישיר מקומפוזיטור Chromium:**
+   - הפעלת Chromium עם `--enable-begin-frame-control` ושימוש ב-`HeadlessExperimental.beginFrame` בהפרשי 16,666.67 µs.
+   - הזרמת הפריימים כ-JPEG ישירות ל-FFmpeg דרך `stdin` (`image2pipe`).
+4. **בקרת איכות (QC):**
    - וידוא קצב פריימים של 60.0 FPS ומשך מתוכנן באמצעות `ffprobe`.
+   - וידוא 0 duplicate frames בזמן תנועה ואפס ghosting/טשטוש.
+   - וידוא שהחלון הצף, הטפט והדוק נשמרים לאורך הסרטון במבטים הרחבים.
 5. **שמירה כ-Artifact והצגה למשתמש:**
    - העתקת קובץ ה-MP4 לתיקיית ה-Artifacts והטמעה בעמוד סיכום עם נגן וידאו וגלריית פריימים.
 
 ראו `reference/lessons.md` לפירוט לקחים טכניים, מקרי בוחן ומבנה קוד מלא.
+

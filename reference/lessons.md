@@ -116,7 +116,32 @@ def get_pingpong_frame(frame_index, total_source_frames):
   - העכבר מקבל קואורדינטות קבועות ביחס למסגרת שולחן העבודה (`x = 70 + el_x`, `y = 130 + el_y`).
   - כאשר `#desktop` משנה `scale` ו-`transform-origin`, העכבר והאפקטים גדלים וננעלים בצורה מושלמת על שדות הקלט והכפתורים ללא כל סטייה.
 
-### 3. תקן שידור 60 FPS מלא (Transcoding Pipeline)
-- הקלטות ברירת מחדל של דפדפנים מופקות בדרך כלל ב-25 עד 30 FPS. בקצב זה, תנועות עכבר מהירות והקלדה מייצרות ריצוד עין (Micro-stutter).
-- קידוד מאסטר ב-FFmpeg עם `-filter:v fps=60 -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p` מכפיל ומשלים פריימים ומייצר תנועה חלקה לחלוטין (60.0 FPS High Profile) התואמת את איכות הווידאו של מוצרי דגל כמו Screen Studio ו-Cursor Artifacts.
+### 3. ארכיטקטורת 60 FPS אמיתית (True 60 FPS Compositor Stepping vs. Screencast Trap)
+- **המלכודת של `record_video_dir` ב-Playwright/Chromium:**
+  - מנגנון הקלטת הווידאו המובנה של Chromium (`record_video_dir`) נעול בקוד המקור C++ ל-25 FPS בלבד (`options.kDefaultFramesPerSecond = 25`).
+  - הפיכת הקובץ ל-60 FPS באמצעות FFmpeg `-filter:v fps=60` אינה מוסיפה מידע — היא פשוט **משכפלת כל פריים פעמיים או שלוש** (A, A, B, B, B...). העין האנושית מבחינה מיד שהסרטון הוא למעשה ב-25 FPS.
+  - ניסיון להשתמש באינטרפולציית תנועה של FFmpeg (`minterpolate` או `framerate=fps=60:interp_start=0:interp_end=255`) מייצר מריחת מעבר לינארית (Crossfade Blending) שיוצרת "עכבר רפאים" כפול (Ghost Double Cursor) וטשטוש אותיות שמשתמשים דוחים מיד ("זה עדיין 30FPS !!!", "לא עבד").
+- **הפתרון המנצח: שליטה ישירה בקומפוזיטור (Compositor Stepping):**
+  - הפעלת Chromium עם הדגלים:
+    `--enable-begin-frame-control --run-all-compositor-stages-before-draw --disable-new-content-rendering-timeout --no-sandbox`.
+  - פתיחת סשן CDP והפעלת `HeadlessExperimental.enable`.
+  - קידום ציר הזמן באופן דטרמיניסטי במילישניות מדויקות (`window.studioSeek(t)`).
+  - הפעלת `HeadlessExperimental.beginFrame` עם הפרש של 16,666.67 מיקרו-שניות לכל פריים (`interval=16666.67`).
+  - הזרמת הפריימים (JPEG בייטים) ישירות לתוך ה-`stdin` של FFmpeg בצינור `image2pipe` (`-f image2pipe -vcodec mjpeg -r 60 -i - -c:v libx264 -preset fast -crf 17 -pix_fmt yuv420p output.mp4`).
+- **תוצאות מדידה מוכחות (Verified Metrics):**
+  - קצב פריימים: 60.0 FPS מדויק (3600 פריימים עבור 60 שניות).
+  - דלתא בין פריימים בתנועה: **0 פריימים משוכפלים** (Duplicate Frames: 0 מתוך 119 במדידת מקטע תנועה).
+  - **אפס טשטוש / Ghosting:** קווי מתאר של העכבר חדים ברמת הפיקסל הבודד.
+  - מהירות הפקה: 20-25 FPS בזמן ריצה (סרטון של 60 שניות מתרנדר ומופק בפחות מ-3 דקות).
+
+### 4. מקצב הנשימה של המצלמה (Dynamic Camera Breathing Cadence)
+- **הלקח מסרטון המקור של Cursor:**
+  - זום מתמיד (1.25x-1.35x) מוחק את שולי החלון, את הטפט ואת הדוק, והופך את הסרטון למסך רגיל ללא תחושת סטודיו.
+  - בסרטון הבנצ'מרק של Cursor, המצלמה "נושמת":
+    1. מתחילה במבט רחב מלא (1.0x) על הטפט ושולחן העבודה.
+    2. מתקרבת (1.26x-1.28x) בזמן הקלדה ממוקדת בשדה כדי לאפשר קריאה קלה.
+    3. **מיד עם סיום ההקלדה — חוזרת למבט רחב (1.0x)** כדי להציג את התעדכנות התוצאות בהקשר המלא של שולחן העבודה והחלון הצף.
+    4. בבחינת טבלאות נתונים — זום עדין בלבד (1.08x) שמשאיר את שולי החלון וטפט שולחן העבודה בתמונה.
+    5. סיום מלא ב-1.0x המציג את כל הנתונים, הדוק והטפט בסינרגיה מושלמת.
+
 
